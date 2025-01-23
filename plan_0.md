@@ -1,25 +1,20 @@
-## Phase 2: Solana Integration
+## Phase 2: Solana Integration MVP - Rock Paper Scissors Results
 
-1. [ ] Create initial Anchor project structure
-    - Initialize new project with `anchor init game_results`
-    - Set up basic program structure
-    - Configure for local test validator
+### Setup & Environment Validation
+1. [x] Verify development environment
+    - Run `anchor --version` to confirm installation
+    - Run `solana --version` to confirm installation
+    - Test local validator with `anchor test` using basic initialize
+    - Confirm successful test execution
 
-2. [ ] Develop basic game results program
+### Core Implementation
+2. [x] Implement basic GameResult structure
     ```rust
     #[account]
     pub struct GameResult {
         pub player: Pubkey,            // 32
-        pub game_type: GameType,       // 1
         pub result: GameOutcome,       // 1
         pub timestamp: i64,            // 8
-        pub opponent: Option<Pubkey>,  // 1 + 32
-    }
-
-    #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
-    pub enum GameType {
-        RockPaperScissors,
-        // Future game types...
     }
 
     #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
@@ -29,40 +24,52 @@
         Draw,
     }
     ```
-    - Implement result recording logic
-    - Add basic validation
+    - Write test to create and verify account structure
+    - Run `anchor test` to validate
 
-3. [ ] Create Zig-Anchor interface
+3. [ ] Implement record_game_result instruction
+    - Add instruction to record game results
+    - Create appropriate Context struct
+    - Write test to record a sample game result
+    - Run `anchor test` to validate
+
+4. [ ] Create basic Zig interface
     ```zig
     pub const SolanaInterface = struct {
         pub fn recordGameResult(
             player: PublicKey,
-            gameType: GameType,
             result: GameOutcome,
-            opponent: ?PublicKey
+            timestamp: i64,
         ) Error!void;
-        
-        pub fn getPlayerResults(
-            player: PublicKey,
-            gameType: GameType
-        ) Error![]GameResult;
-    };
+    }
     ```
+    - Write simple test from Zig to call Solana program
+    - Validate transaction confirmation
+    - Run combined test suite
 
-4. [ ] Set up testing framework
-    - Create basic test accounts
-    - Implement result recording tests
-    - Add query tests
-    - Test Zig integration
+### Integration Testing
+5. [ ] End-to-end testing
+    - Create test that simulates game completion
+    - Verify result storage on Solana
+    - Test error conditions and handling
+    - Run full test suite
 
-5. [ ] Implement basic query interface
-    - Add game history lookup
-    - Create player statistics view
-    - Add filtering capabilities
+### Documentation & Cleanup
+6. [ ] Document integration points
+    - Document Solana program API
+    - Document Zig interface usage
+    - Add example usage
 
-6. [ ] Create deployment scripts
-    - Local deployment
-    - Devnet deployment
-    - Basic monitoring
+### Future Phases (Post-MVP)
+7. [ ] Player Account System
+    - Player registration
+    - Authentication
+    - Profile management
 
-// Future phases will handle items, characters, and complex game state
+8. [ ] Enhanced Game Features
+    - Game history tracking
+    - Player statistics
+    - Opponent tracking
+    - Additional game types
+
+Note: After each step, we'll run tests to ensure everything works as expected before moving to the next step. Each step should be committed separately for better tracking and potential rollback if needed.
