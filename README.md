@@ -1,0 +1,6 @@
+
+don't be dumb, make sure yarn is installed...
+helpful scripts
+`sudo lsof -i :8899`
+...
+`sudo kill -9 <PID>`
