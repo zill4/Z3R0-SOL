@@ -4,7 +4,7 @@ use anchor_client::{
     solana_sdk::{
         commitment_config::CommitmentConfig,
         pubkey::Pubkey,
-        signature::{Keypair, read_keypair_file},
+        signature::{read_keypair_file, Signer},
         system_program,
     },
     Client, Cluster,
@@ -26,46 +26,32 @@ fn test_game_program() {
         .expect("Failed to read keypair file");
     println!("Wallet loaded: {}", payer.pubkey());
 
-    println!("Creating client connection...");
+    // Create client
     let client = Client::new_with_options(
         Cluster::Localnet,
         &payer,
         CommitmentConfig::processed()
     );
-    let program_id = Pubkey::from_str(program_id).unwrap();
-    let program = client.program(program_id)
+    let program = client.program(Pubkey::from_str(program_id).unwrap())
         .expect("Failed to create program client");
-    println!("Client connection established");
 
-    // Test 1: Initialize Program
-    println!("\n--- Test 1: Program Initialization ---");
-    let init_tx = program
-        .request()
-        .accounts(z_sol::accounts::Initialize {})
-        .args(z_sol::instruction::Initialize {})
-        .send()
-        .expect("Failed to initialize program");
-    println!("Program initialized successfully!");
-    println!("Initialize transaction signature: {}", init_tx);
-
-    // Test 2: Record Game Result
-    println!("\n--- Test 2: Recording Game Result ---");
+    // Test recording a game result
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()
         .as_secs() as i64;
-    println!("Using timestamp: {}", timestamp);
-    
+
     // Generate PDA for game result account
+    let payer_pubkey = payer.pubkey();
     let seeds = [
         b"game_result",
-        payer.pubkey().as_ref(),
+        payer_pubkey.as_ref(),
         &timestamp.to_le_bytes(),
     ];
-    let (game_result_pda, _bump) = Pubkey::find_program_address(&seeds, &program_id);
-    println!("Generated game result PDA: {}", game_result_pda);
+    let (game_result_pda, _bump) = 
+        Pubkey::find_program_address(&seeds, &program.id());
 
-    println!("Recording WIN result...");
+    // Record a game result
     let record_tx = program
         .request()
         .accounts(z_sol::accounts::RecordGameResult {
@@ -80,9 +66,16 @@ fn test_game_program() {
         .send()
         .expect("Failed to record game result");
     
-    println!("Game result recorded successfully!");
-    println!("Record transaction signature: {}", record_tx);
+    println!("Game result recorded! Tx: {}", record_tx);
+
+    // Verify the recorded data
+    let game_result_account = program
+        .account::<z_sol::GameResult>(game_result_pda)
+        .expect("Failed to fetch game result account");
+
+    assert_eq!(game_result_account.player, payer.pubkey());
+    assert_eq!(game_result_account.result, GameOutcome::Win);
+    assert_eq!(game_result_account.timestamp, timestamp);
     
-    // Optional: Add verification of the recorded data
-    println!("\n=== All Tests Completed Successfully ===\n");
+    println!("Game result verified successfully!");
 }
